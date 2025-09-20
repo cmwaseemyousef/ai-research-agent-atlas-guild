@@ -55,7 +55,17 @@ The system is designed as a modular AI agent with clear separation of concerns. 
 - **Robust Error Handling**: Gracefully handles failed searches, extraction errors, and API issues
 - **Real-time Status Updates**: Track research progress through different stages
 
-## 📋 Setup Instructions
+## � Screenshots
+
+### Web Interface Overview
+![Main Interface](screenshots/Screenshot_1.png)
+*Professional web interface showing research query form and reports history*
+
+### Research Report Example  
+![Generated Report](screenshots/Screenshot_5.png)
+*AI-generated structured report with summary, key findings, and source analysis*
+
+## �📋 Setup Instructions
 
 ### Prerequisites
 
