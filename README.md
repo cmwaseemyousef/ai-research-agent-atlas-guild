@@ -1,6 +1,25 @@
 # AI Research Agent - Atlas Guild Internship Assignment
+## 📸 Screenshots
 
-An intelligent AI agent that searches the web, extracts content, and generates structured research reports using exactly 2 tools as specified in the assignment:
+### 1. Main Web Interface
+![Main Interface](screenshot/1.png)
+*Professional Flask web application with clean Bootstrap design and navigation*
+
+### 2. Research Query Form
+![Search Form](screenshot/2.png)
+*Simple and intuitive research query submission interface*
+
+### 3. Real-time Progress Tracking
+![Progress Tracking](screenshot/3.png)
+*Live status updates showing search, extraction, and report generation phases*
+
+### 4. Reports History & Management
+![Reports List](screenshot/4.png)
+*Complete history of research queries with persistent database storage*
+
+### 5. Generated Research Report
+![Generated Report](screenshot/5.png)
+*AI-powered structured report with summary, key findings, and source analysis*lligent AI agent that searches the web, extracts content, and generates structured research reports using exactly 2 tools as specified in the assignment:
 
 1. **Web Search API**: Tavily API for finding relevant sources
 2. **Content Extractor**: trafilatura (HTML) + pypdf (PDFs) for clean text extraction
