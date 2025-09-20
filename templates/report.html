@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}{{ data.query }} - Report{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('reports') }}">Reports</a></li>
+                    <li class="breadcrumb-item active">Report #{{ data.id }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h2>{{ data.query }}</h2>
+                    <div class="text-muted mb-2">
+                        <i class="fas fa-calendar me-1"></i>Generated: {{ data.created_at | datetime }}
+                        {% if data.report %}
+                        <span class="ms-3">
+                            <i class="fas fa-clock me-1"></i>Report: {{ data.report.generated_at | datetime }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <span class="badge 
+                    {% if data.status == 'completed' %}bg-success
+                    {% elif data.status == 'failed' %}bg-danger
+                    {% elif data.status in ['searching', 'extracting', 'generating'] %}bg-warning
+                    {% else %}bg-secondary{% endif %} fs-6">
+                    {{ data.status | title }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {% if data.status == 'failed' and data.error_message %}
+    <div class="alert alert-danger" role="alert">
+        <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Research Failed</h5>
+        <p class="mb-0">{{ data.error_message }}</p>
+    </div>
+    {% endif %}
+
+    {% if data.report %}
+    <!-- Report Content -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Summary -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-file-text me-2"></i>Summary</h5>
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ data.report.summary }}</p>
+                </div>
+            </div>
+
+            <!-- Key Points -->
+            {% if data.report.key_points %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Key Points</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for point in data.report.key_points %}
+                        <li class="list-group-item px-0">
+                            <i class="fas fa-check-circle text-success me-2"></i>{{ point }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Methodology -->
+            {% if data.report.methodology %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Methodology</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ data.report.methodology }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Limitations -->
+            {% if data.report.limitations %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-circle me-2"></i>Limitations</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{ data.report.limitations }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Stats -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Statistics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Sources Found:</span>
+                        <strong>{{ data.sources_found }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Successfully Extracted:</span>
+                        <strong>{{ data.sources_extracted }}</strong>
+                    </div>
+                    {% if data.report %}
+                    <div class="d-flex justify-content-between">
+                        <span>Sources Analyzed:</span>
+                        <strong>{{ data.report.sources_analyzed }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sources -->
+            {% if data.sources %}
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-link me-2"></i>Sources ({{ data.sources|length }})</h6>
+                </div>
+                <div class="card-body">
+                    {% for source in data.sources %}
+                    <div class="mb-3 {% if not loop.last %}pb-3 border-bottom{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <h6 class="mb-1">
+                                <a href="{{ source.url }}" target="_blank" class="text-decoration-none">
+                                    {{ source.title or "Untitled" | truncate(50) }}
+                                    <i class="fas fa-external-link-alt ms-1" style="font-size: 0.7rem;"></i>
+                                </a>
+                            </h6>
+                            <span class="badge 
+                                {% if source.extraction_success %}bg-success
+                                {% else %}bg-danger{% endif %} ms-2">
+                                {% if source.extraction_success %}✓{% else %}✗{% endif %}
+                            </span>
+                        </div>
+                        
+                        {% if source.snippet %}
+                        <p class="small text-muted mb-1">{{ source.snippet | truncate(100) }}</p>
+                        {% endif %}
+                        
+                        <div class="small text-muted">
+                            {{ source.url | truncate(60) }}
+                        </div>
+                        
+                        {% if not source.extraction_success and source.extraction_error %}
+                        <div class="small text-danger mt-1">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            {{ source.extraction_error | truncate(50) }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% elif data.status in ['searching', 'extracting', 'generating'] %}
+    <!-- Processing Status -->
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5>Research in Progress</h5>
+        <p class="text-muted">
+            {% if data.status == 'searching' %}
+                Searching for relevant sources...
+            {% elif data.status == 'extracting' %}
+                Extracting content from sources...
+            {% elif data.status == 'generating' %}
+                Generating report...
+            {% endif %}
+        </p>
+        <button class="btn btn-outline-primary" onclick="location.reload()">
+            <i class="fas fa-sync-alt me-1"></i>Refresh
+        </button>
+    </div>
+
+    {% else %}
+    <!-- No Report Available -->
+    <div class="text-center py-5">
+        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No Report Available</h5>
+        <p class="text-muted">The research process may have failed or is still in progress.</p>
+        <a href="{{ url_for('reports') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-1"></i>Back to Reports
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('reports') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Reports
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>New Research
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if data.status in ['searching', 'extracting', 'generating'] %}
+<script>
+// Auto-refresh for processing reports
+setTimeout(function() {
+    location.reload();
+}, 10000); // Refresh every 10 seconds
+</script>
+{% endif %}
+{% endblock %}

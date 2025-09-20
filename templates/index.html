@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="search-form text-white">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="text-center mb-4">
+                    <i class="fas fa-search me-2"></i>AI Research Agent
+                </h1>
+                <p class="text-center mb-4 opacity-75">
+                    Enter a research topic and get a comprehensive report with sources and key insights
+                </p>
+                
+                {% if not agent_available %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Research agent is not available. Please check your API keys in the .env file.
+                </div>
+                {% else %}
+                <form id="searchForm">
+                    <div class="input-group input-group-lg">
+                        <input type="text" 
+                               class="form-control" 
+                               id="query" 
+                               name="query" 
+                               placeholder="e.g., Latest research on AI in education"
+                               required>
+                        <button class="btn btn-light" type="submit" id="searchBtn">
+                            <i class="fas fa-search me-1"></i>Research
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="loading-spinner text-center mt-3" id="loadingSpinner">
+                    <div class="spinner-border text-light" role="status">
+                        <span class="visually-hidden">Researching...</span>
+                    </div>
+                    <p class="mt-2">Conducting research... This may take a minute.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Statistics Section -->
+    {% if stats %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3><i class="fas fa-chart-bar me-2"></i>Statistics</h3>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">{{ stats.total_queries or 0 }}</h5>
+                    <p class="card-text">Total Queries</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">{{ stats.total_reports or 0 }}</h5>
+                    <p class="card-text">Reports Generated</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-info">{{ stats.total_sources or 0 }}</h5>
+                    <p class="card-text">Sources Analyzed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">{{ (stats.database_size / 1024) | round(1) or 0 }} KB</h5>
+                    <p class="card-text">Database Size</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Reports Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3><i class="fas fa-clock me-2"></i>Recent Reports</h3>
+                <a href="{{ url_for('reports') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-list me-1"></i>View All Reports
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if recent_reports %}
+    <div class="row">
+        {% for report in recent_reports %}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">{{ report.query | truncate(80) }}</h6>
+                        <span class="badge status-badge 
+                            {% if report.status == 'completed' %}bg-success
+                            {% elif report.status == 'failed' %}bg-danger
+                            {% elif report.status in ['searching', 'extracting', 'generating'] %}bg-warning
+                            {% else %}bg-secondary{% endif %}">
+                            {{ report.status | title }}
+                        </span>
+                    </div>
+                    
+                    <div class="text-muted small mb-2">
+                        <i class="fas fa-calendar me-1"></i>{{ report.created_at | datetime }}
+                    </div>
+                    
+                    <div class="row text-center small text-muted mb-3">
+                        <div class="col-4">
+                            <i class="fas fa-search me-1"></i>{{ report.sources_found or 0 }} found
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-download me-1"></i>{{ report.sources_extracted or 0 }} extracted
+                        </div>
+                        <div class="col-4">
+                            {% if report.has_report %}
+                                <i class="fas fa-check-circle text-success me-1"></i>Report ready
+                            {% else %}
+                                <i class="fas fa-clock text-warning me-1"></i>Processing
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if report.has_report %}
+                    <a href="{{ url_for('view_report', query_id=report.id) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i>View Report
+                    </a>
+                    {% elif report.status == 'failed' %}
+                    <div class="text-danger small">
+                        <i class="fas fa-exclamation-triangle me-1"></i>{{ report.error_message or 'Processing failed' }}
+                    </div>
+                    {% else %}
+                    <div class="text-warning small">
+                        <i class="fas fa-spinner fa-spin me-1"></i>Processing...
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No reports yet</h5>
+        <p class="text-muted">Start by entering a research query above</p>
+    </div>
+    {% endif %}
+
+    <!-- Example Queries Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4><i class="fas fa-lightbulb me-2"></i>Example Queries</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <a href="#" class="example-query text-decoration-none">
+                                Latest research on AI in education
+                            </a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="#" class="example-query text-decoration-none">
+                                Impact of Mediterranean diet on heart health
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <a href="#" class="example-query text-decoration-none">
+                                Climate change effects on agriculture
+                            </a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="#" class="example-query text-decoration-none">
+                                Benefits of renewable energy sources
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('searchForm');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const searchBtn = document.getElementById('searchBtn');
+    const queryInput = document.getElementById('query');
+    
+    // Handle form submission
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const query = queryInput.value.trim();
+            if (!query) {
+                alert('Please enter a research query');
+                return;
+            }
+            
+            // Show loading spinner
+            searchBtn.disabled = true;
+            loadingSpinner.style.display = 'block';
+            
+            // Submit search
+            const formData = new FormData();
+            formData.append('query', query);
+            
+            fetch('/search', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert('Error: ' + data.error);
+                    searchBtn.disabled = false;
+                    loadingSpinner.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while conducting research');
+                searchBtn.disabled = false;
+                loadingSpinner.style.display = 'none';
+            });
+        });
+    }
+    
+    // Handle example query clicks
+    document.querySelectorAll('.example-query').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (queryInput) {
+                queryInput.value = this.textContent.trim();
+                queryInput.focus();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
